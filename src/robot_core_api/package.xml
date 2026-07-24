@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>robot_core_api</name>
+  <version>0.3.0</version>
+  <description>Shared Result, ErrorCode, Status, and lifecycle types for the robot framework.</description>
+  <maintainer email="stereo.39bouvier@icloud.com">stereo</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

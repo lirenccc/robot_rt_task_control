@@ -1,0 +1,31 @@
+# EC-Master / IgH HardwareBus examples (optional)
+# Source sibling master installs before colcon build of robot_ethercat_adapters:
+#   source ../robot_ethercat_master_ecmaster/install/setup.bash
+#   source ../robot_ethercat_master_igh/install/setup.bash
+#
+# Then set hardware.base.plugin to one of:
+#   robot_ethercat_adapters/EcMasterHardwareBus
+#   robot_ethercat_adapters/IghHardwareBus
+# and export ETHERCAT_MOTOR_MODEL (default NH17-100-BT-48E).
+
+schema_version: 1
+
+hardware:
+  base:
+    plugin: robot_ethercat_adapters/EcMasterHardwareBus
+
+providers:
+  navigation:
+    type: ros_action
+    endpoint: /navigation/navigate_to_pose
+
+  manipulation:
+    type: ros_action
+    endpoint: /manipulation/execute_skill
+
+safety:
+  policies:
+    - robot_safety/VelocityLimitPolicy
+
+planner:
+  type: simple

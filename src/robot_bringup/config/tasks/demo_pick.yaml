@@ -1,0 +1,17 @@
+name: demo_pick
+steps:
+  - kind: navigate
+    label: go_table
+    pose:
+      frame_id: map
+      position: {x: 1.0, y: 0.0, z: 0.0}
+  - kind: manipulate
+    label: pick_cup
+    skill_name: pick
+    object_id: red_cup
+    pose:
+      frame_id: base_link
+      position: {x: 0.45, y: 0.0, z: 0.25}
+    joint_names: [joint1, joint2]
+    joint_positions: [0.1, -0.2]
+    duration_sec: 1.0

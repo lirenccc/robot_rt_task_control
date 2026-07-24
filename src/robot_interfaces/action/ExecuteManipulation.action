@@ -1,0 +1,17 @@
+# Goal
+string skill_name
+string object_id
+geometry_msgs/PoseStamped target_pose
+# Explicit joint target (preferred for FollowJointTrajectory). Empty positions => adapter rejects.
+string[] joint_names
+float64[] joint_positions
+float64[] joint_velocities
+float64 duration_sec
+---
+# Result
+bool success
+string message
+---
+# Feedback
+string phase
+float32 progress

@@ -1,0 +1,58 @@
+# APT packages for Ubuntu 22.04 + ROS 2 Humble (default).
+# Override distro:  ROS_DISTRO=jazzy ./scripts/setup_environment.sh
+# One-click:        ./scripts/setup_environment.sh
+#
+# Lines starting with # are ignored. Do not put pip packages here.
+
+# --- base ---
+build-essential
+cmake
+git
+python3-pip
+python3-colcon-common-extensions
+python3-rosdep
+python3-vcstool
+libyaml-cpp-dev
+
+# --- ROS core (adjust ros-${ROS_DISTRO}-* via setup script) ---
+# The setup script prefixes these with ros-$ROS_DISTRO-
+ros-dev-tools
+
+# --- keyed as ROS_PKG (script expands to ros-$ROS_DISTRO-<name>) ---
+ROS_PKG:ros-base
+ROS_PKG:rclcpp
+ROS_PKG:rclcpp-action
+ROS_PKG:rclcpp-lifecycle
+ROS_PKG:pluginlib
+ROS_PKG:rosidl-default-generators
+ROS_PKG:rosidl-default-runtime
+ROS_PKG:geometry-msgs
+ROS_PKG:builtin-interfaces
+ROS_PKG:trajectory-msgs
+ROS_PKG:control-msgs
+ROS_PKG:xacro
+ROS_PKG:robot-state-publisher
+ROS_PKG:launch
+ROS_PKG:launch-ros
+
+# --- ros2_control stack ---
+ROS_PKG:ros2-control
+ROS_PKG:ros2-controllers
+ROS_PKG:hardware-interface
+ROS_PKG:controller-manager
+ROS_PKG:joint-state-broadcaster
+ROS_PKG:diff-drive-controller
+ROS_PKG:joint-trajectory-controller
+ROS_PKG:realtime-tools
+ROS_PKG:launch-testing
+ROS_PKG:launch-testing-ament-cmake
+ROS_PKG:launch-testing-ros
+
+# --- optional adapters (Nav2 / MoveIt messages) ---
+# Recommended when using providers.navigation.type: nav2
+ROS_PKG:nav2-msgs
+# ROS_PKG:navigation2
+
+# Uncomment for fuller MoveIt integration beyond FollowJointTrajectory
+# ROS_PKG:moveit-msgs
+# ROS_PKG:moveit

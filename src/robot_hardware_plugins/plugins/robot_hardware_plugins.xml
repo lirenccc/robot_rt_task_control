@@ -1,0 +1,26 @@
+<library path="robot_hardware_plugins">
+  <class
+    name="robot_hardware_plugins/MockHardwareBus"
+    type="robot_hardware_plugins::MockHardwareBus"
+    base_class_type="robot_hardware_api::HardwareBus">
+    <description>Deterministic mock plant for HardwareBus contract tests and simulation.</description>
+  </class>
+  <class
+    name="robot_hardware_plugins/SkeletonHardwareBus"
+    type="robot_hardware_plugins::SkeletonHardwareBus"
+    base_class_type="robot_hardware_api::HardwareBus">
+    <description>
+      Vendor-agnostic real-hardware template. Replace TODO sections with bus IO;
+      keep exchange() allocation-free.
+    </description>
+  </class>
+  <class
+    name="robot_hardware_plugins/ReferenceSimHardwareBus"
+    type="robot_hardware_plugins::ReferenceSimHardwareBus"
+    base_class_type="robot_hardware_api::HardwareBus">
+    <description>
+      Production-shaped reference plant (sequence, watchdog, fault inject).
+      Use as a vendor plugin checklist without a real fieldbus.
+    </description>
+  </class>
+</library>

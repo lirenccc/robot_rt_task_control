@@ -1,0 +1,11 @@
+# Goal
+string instruction
+---
+# Result
+bool success
+string message
+---
+# Feedback
+string state
+string current_step
+float32 progress

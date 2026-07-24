@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>robot_runtime</name>
+  <version>0.3.0</version>
+  <description>Composition root: RuntimeBuilder, config loaders, and adapter factories.</description>
+  <maintainer email="stereo.39bouvier@icloud.com">stereo</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>robot_capability_api</depend>
+  <depend>robot_core_api</depend>
+  <depend>robot_hardware_api</depend>
+  <depend>robot_manipulation_adapters</depend>
+  <depend>robot_navigation_adapters</depend>
+  <depend>robot_profile</depend>
+  <depend>robot_safety</depend>
+  <depend>robot_task</depend>
+  <depend>robot_interfaces</depend>
+  <depend>rclcpp_action</depend>
+  <depend>yaml-cpp</depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

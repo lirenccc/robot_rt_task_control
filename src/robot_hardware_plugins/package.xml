@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>robot_hardware_plugins</name>
+  <version>0.3.0</version>
+  <description>Built-in HardwareBus plugins: Mock, Skeleton, and ReferenceSim (vendor masters stay external).</description>
+  <maintainer email="stereo.39bouvier@icloud.com">stereo</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>pluginlib</depend>
+  <depend>robot_hardware_api</depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+    <robot_hardware_api plugin="${prefix}/plugins/robot_hardware_plugins.xml"/>
+  </export>
+</package>

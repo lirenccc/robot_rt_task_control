@@ -1,0 +1,21 @@
+schema_version: 1
+
+hardware:
+  base:
+    plugin: robot_hardware_plugins/MockHardwareBus
+
+providers:
+  navigation:
+    type: mock
+    endpoint: ""
+
+  manipulation:
+    type: mock
+    endpoint: ""
+
+planner:
+  type: simple
+
+safety:
+  policies:
+    - robot_safety/VelocityLimitPolicy

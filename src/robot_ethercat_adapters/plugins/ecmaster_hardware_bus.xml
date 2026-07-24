@@ -1,0 +1,11 @@
+<library path="robot_ethercat_adapters_ecmaster">
+  <class
+    name="robot_ethercat_adapters/EcMasterHardwareBus"
+    type="robot_ethercat_adapters::EcMasterHardwareBus"
+    base_class_type="robot_hardware_api::HardwareBus">
+    <description>
+      Thin HardwareBus adapter for ethercat_master_ecmaster (acontis EC-Master).
+      Requires ETHERCAT_MOTOR_MODEL and ECMASTER_* environment as documented.
+    </description>
+  </class>
+</library>

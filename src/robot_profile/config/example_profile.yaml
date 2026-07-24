@@ -1,0 +1,21 @@
+schema_version: 1
+
+robot:
+  model: mobile_manipulator
+  variant: standard
+  serial_number: robot_001
+
+capabilities:
+  navigation: true
+  manipulation: true
+  gripper: true
+
+frames:
+  base: base_link
+  map: map
+  tool: tool0
+
+limits:
+  max_linear_velocity: 1.0
+  max_angular_velocity: 1.5
+  payload_kg: 5.0

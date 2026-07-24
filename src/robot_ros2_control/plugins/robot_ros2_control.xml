@@ -1,0 +1,10 @@
+<library path="robot_ros2_control">
+  <class
+    name="robot_ros2_control/RtMobileManipulatorSystem"
+    type="robot_ros2_control::RtMobileManipulatorSystem"
+    base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Mobile manipulator ros2_control SystemInterface with an independent RT-oriented hardware closed-loop thread.
+    </description>
+  </class>
+</library>

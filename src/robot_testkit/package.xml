@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>robot_testkit</name>
+  <version>0.3.0</version>
+  <description>Contract tests and mock assets that use the same plugin loading path as production.</description>
+  <maintainer email="stereo.39bouvier@icloud.com">stereo</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>ament_index_cpp</depend>
+  <depend>pluginlib</depend>
+  <depend>robot_core_api</depend>
+  <depend>robot_hardware_api</depend>
+  <depend>robot_hardware_plugins</depend>
+  <depend>robot_profile</depend>
+  <depend>robot_safety</depend>
+  <depend>robot_capability_api</depend>
+  <depend>robot_navigation_adapters</depend>
+  <depend>robot_manipulation_adapters</depend>
+  <depend>robot_runtime</depend>
+  <depend>robot_interfaces</depend>
+  <depend>robot_ros2_control</depend>
+  <depend>robot_task</depend>
+  <depend>robot_bringup</depend>
+  <depend>rclcpp</depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>launch_testing</test_depend>
+  <test_depend>launch_testing_ament_cmake</test_depend>
+  <test_depend>launch_testing_ros</test_depend>
+  <test_depend>rclpy</test_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

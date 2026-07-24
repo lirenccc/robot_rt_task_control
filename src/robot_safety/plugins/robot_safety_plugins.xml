@@ -1,0 +1,8 @@
+<library path="robot_safety">
+  <class
+    name="robot_safety/VelocityLimitPolicy"
+    type="robot_safety::VelocityLimitPolicy"
+    base_class_type="robot_safety::ISafetyPolicy">
+    <description>Denies commands that exceed profile linear/angular velocity limits.</description>
+  </class>
+</library>

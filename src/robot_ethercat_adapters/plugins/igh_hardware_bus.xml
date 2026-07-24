@@ -1,0 +1,11 @@
+<library path="robot_ethercat_adapters_igh">
+  <class
+    name="robot_ethercat_adapters/IghHardwareBus"
+    type="robot_ethercat_adapters::IghHardwareBus"
+    base_class_type="robot_hardware_api::HardwareBus">
+    <description>
+      Thin HardwareBus adapter for ethercat_master_igh (IgH EtherCAT Master).
+      Requires ETHERCAT_MOTOR_MODEL and IgH userspace (/opt/etherlab).
+    </description>
+  </class>
+</library>

@@ -1,0 +1,19 @@
+schema_version: 1
+
+# Template runtime for Nav2 (install ros-humble-nav2-msgs / navigation2, rebuild).
+hardware:
+  base:
+    plugin: robot_hardware_plugins/SkeletonHardwareBus
+
+providers:
+  navigation:
+    type: nav2
+    endpoint: navigate_to_pose
+
+  manipulation:
+    type: mock
+    endpoint: ""
+
+safety:
+  policies:
+    - robot_safety/VelocityLimitPolicy

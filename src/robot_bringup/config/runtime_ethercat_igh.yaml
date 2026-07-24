@@ -1,0 +1,25 @@
+# IgH HardwareBus example (optional)
+# Source ../robot_ethercat_master_igh/install/setup.bash before building adapters.
+# Export ETHERCAT_MOTOR_MODEL as needed (default NH17-100-BT-48E).
+
+schema_version: 1
+
+hardware:
+  base:
+    plugin: robot_ethercat_adapters/IghHardwareBus
+
+providers:
+  navigation:
+    type: ros_action
+    endpoint: /navigation/navigate_to_pose
+
+  manipulation:
+    type: ros_action
+    endpoint: /manipulation/execute_skill
+
+safety:
+  policies:
+    - robot_safety/VelocityLimitPolicy
+
+planner:
+  type: simple

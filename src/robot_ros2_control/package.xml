@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>robot_ros2_control</name>
+  <version>0.3.0</version>
+  <description>
+    Thin ros2_control SystemInterface shell: RT loop + pluginlib HardwareBus
+    (robot_hardware_api / robot_hardware_plugins).
+  </description>
+  <maintainer email="stereo.39bouvier@icloud.com">stereo</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>realtime_tools</depend>
+  <depend>robot_hardware_api</depend>
+  <depend>robot_interfaces</depend>
+  <exec_depend>robot_hardware_plugins</exec_depend>
+
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <hardware_interface plugin="${prefix}/plugins/robot_ros2_control.xml"/>
+  </export>
+</package>

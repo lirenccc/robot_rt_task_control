@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>robot_manipulation_adapters</name>
+  <version>0.3.0</version>
+  <description>ManipulationPort adapters (ROS Action and in-process mock).</description>
+  <maintainer email="stereo.39bouvier@icloud.com">stereo</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>control_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>robot_capability_api</depend>
+  <depend>robot_core_api</depend>
+  <depend>robot_interfaces</depend>
+  <depend>trajectory_msgs</depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

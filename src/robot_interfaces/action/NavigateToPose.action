@@ -1,0 +1,12 @@
+# Goal
+geometry_msgs/PoseStamped target_pose
+string planner_id
+---
+# Result
+bool success
+string message
+---
+# Feedback
+string phase
+float32 progress
+float32 distance_remaining

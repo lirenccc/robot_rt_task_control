@@ -1,0 +1,23 @@
+# Python packages for this ROS 2 workspace (pip).
+# System / ROS Deb packages live in requirements-apt.txt.
+# One-click setup:  ./scripts/setup_environment.sh
+#
+# Prefer apt-installed tooling when available (colcon/rosdep/vcstool).
+# Pip uses a mainland mirror by default in setup_environment.sh.
+# Manual install example:
+#   python3 -m pip install --user -i https://pypi.tuna.tsinghua.edu.cn/simple \
+#     --trusted-host pypi.tuna.tsinghua.edu.cn -r requirements.txt
+
+# Build / workspace tooling (also provided by apt; pip is fallback)
+colcon-common-extensions>=0.3.0
+rosdep>=0.22.0
+vcstool>=0.3.0
+
+# Launch / config helpers (usually also via apt; pip fallback)
+PyYAML>=6.0
+lark>=1.1.0
+setuptools>=59.0
+wheel>=0.37.0
+
+# Optional: Nav2 Python clients when using nav2 provider
+# nav2-simple-commander>=0.0.1

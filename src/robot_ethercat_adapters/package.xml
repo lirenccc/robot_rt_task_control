@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>robot_ethercat_adapters</name>
+  <version>0.3.0</version>
+  <description>
+    Optional thin HardwareBus plugins for external EtherCAT masters
+    (ethercat_master_ecmaster / ethercat_master_igh). Built only when the
+    corresponding master package is found (QUIET); core packages do not
+    hard-depend on masters.
+  </description>
+  <maintainer email="stereo.39bouvier@icloud.com">stereo</maintainer>
+  <!-- Links optional GPL-2.0 master stacks; distribute combined binaries as GPL-2.0. -->
+  <license>GPL-2.0-only</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>pluginlib</depend>
+  <depend>robot_hardware_api</depend>
+  <!-- optional at build time (CMake QUIET): ethercat_master_ecmaster, ethercat_master_igh -->
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

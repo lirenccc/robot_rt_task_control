@@ -1,0 +1,19 @@
+schema_version: 1
+
+# Template runtime for MoveIt / arm_controller FollowJointTrajectory backend.
+hardware:
+  base:
+    plugin: robot_hardware_plugins/SkeletonHardwareBus
+
+providers:
+  navigation:
+    type: mock
+    endpoint: ""
+
+  manipulation:
+    type: follow_joint_trajectory
+    endpoint: /arm_controller/follow_joint_trajectory
+
+safety:
+  policies:
+    - robot_safety/VelocityLimitPolicy

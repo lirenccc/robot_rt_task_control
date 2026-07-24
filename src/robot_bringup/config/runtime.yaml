@@ -1,0 +1,24 @@
+schema_version: 1
+
+hardware:
+  base:
+    # Swap to robot_hardware_plugins/SkeletonHardwareBus then fill vendor TODOs
+    plugin: robot_hardware_plugins/MockHardwareBus
+
+providers:
+  navigation:
+    # mock | ros_action | nav2 (nav2 requires nav2_msgs at build time)
+    type: ros_action
+    endpoint: /navigation/navigate_to_pose
+
+  manipulation:
+    # mock | ros_action | follow_joint_trajectory | moveit
+    type: ros_action
+    endpoint: /manipulation/execute_skill
+
+safety:
+  policies:
+    - robot_safety/VelocityLimitPolicy
+
+planner:
+  type: simple

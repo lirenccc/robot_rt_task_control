@@ -1,0 +1,18 @@
+schema_version: 1
+
+hardware:
+  base:
+    plugin: robot_hardware_plugins/MockHardwareBus
+
+providers:
+  navigation:
+    type: ros_action
+    endpoint: /navigation/navigate_to_pose
+
+  manipulation:
+    type: ros_action
+    endpoint: /manipulation/execute_skill
+
+safety:
+  policies:
+    - robot_safety/VelocityLimitPolicy

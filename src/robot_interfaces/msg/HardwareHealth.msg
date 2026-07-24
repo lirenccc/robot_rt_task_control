@@ -1,0 +1,10 @@
+builtin_interfaces/Time stamp
+bool rt_loop_running
+float64 measured_frequency_hz
+uint64 loop_count
+uint64 missed_deadlines
+string last_error
+string mode
+string fault_code
+bool estop_active
+bool allows_motion
