@@ -74,6 +74,38 @@ robot_core_api::Result<RobotProfile> parse_node(const YAML::Node & root)
         profile.limits.payload_kg = limits["payload_kg"].as<double>();
       }
     }
+
+    if (const auto joints = root["joints"]) {
+      if (joints["names"] && joints["names"].IsSequence()) {
+        for (const auto & n : joints["names"]) {
+          profile.joints.names.push_back(n.as<std::string>());
+        }
+      }
+      if (joints["unit"]) {
+        profile.joints.unit = joints["unit"].as<std::string>();
+      }
+      if (joints["type"]) {
+        profile.joints.type = joints["type"].as<std::string>();
+      }
+      if (joints["limit_lower"]) {
+        profile.joints.limit_lower = joints["limit_lower"].as<double>();
+      }
+      if (joints["limit_upper"]) {
+        profile.joints.limit_upper = joints["limit_upper"].as<double>();
+      }
+      if (joints["max_effort"]) {
+        profile.joints.max_effort = joints["max_effort"].as<double>();
+      }
+      if (joints["max_velocity"]) {
+        profile.joints.max_velocity = joints["max_velocity"].as<double>();
+      }
+    }
+
+    if (const auto mechanism = root["mechanism"]) {
+      if (mechanism["plugin"]) {
+        profile.mechanism.plugin = mechanism["plugin"].as<std::string>();
+      }
+    }
   } catch (const YAML::Exception & ex) {
     return Result<RobotProfile>::failure(
       ErrorCode::InvalidConfiguration, std::string("YAML parse error: ") + ex.what());

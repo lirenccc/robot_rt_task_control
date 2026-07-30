@@ -74,7 +74,7 @@ private:
 
   rclcpp::Node::SharedPtr stats_node_;
   rclcpp::Publisher<robot_interfaces::msg::RtLoopStats>::SharedPtr stats_pub_;
-  rclcpp::Time last_stats_pub_{0, 0, RCL_ROS_TIME};
+  rclcpp::Time last_stats_pub_{0, 0, RCL_STEADY_TIME};
 };
 
 }  // namespace robot_ros2_control

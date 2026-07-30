@@ -104,7 +104,8 @@ hardware_interface::CallbackReturn RtMobileManipulatorSystem::on_configure(
   stats_node_ = std::make_shared<rclcpp::Node>("rt_loop_stats_publisher");
   stats_pub_ = stats_node_->create_publisher<robot_interfaces::msg::RtLoopStats>(
     "/robot/rt_loop_stats", rclcpp::SystemDefaultsQoS());
-  last_stats_pub_ = stats_node_->now();
+  // Do not seed with Node::now() — controller_manager may use Steady clock.
+  last_stats_pub_ = rclcpp::Time(0, 0, RCL_STEADY_TIME);
 
   configured_ = true;
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -220,6 +221,9 @@ void RtMobileManipulatorSystem::maybe_publish_rt_stats(const rclcpp::Time & time
 {
   if (!stats_pub_ || !rt_loop_) {
     return;
+  }
+  if (last_stats_pub_.get_clock_type() != time.get_clock_type()) {
+    last_stats_pub_ = rclcpp::Time(0, 0, time.get_clock_type());
   }
   // ~10 Hz from the non-RT controller_manager update path.
   if ((time - last_stats_pub_).seconds() < 0.1) {
