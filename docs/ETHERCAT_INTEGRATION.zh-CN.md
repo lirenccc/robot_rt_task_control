@@ -64,12 +64,33 @@ HardwareBus::exchange()          ← pluginlib 类名可切换
 稳定、与 ROS 解耦的 C++ 面（示意）：
 
 1. **init** — 打开网卡 / 加载 ENI 或 IgH 域，建立从站
-2. **map_joints** — `joint_names[]` → PDO / 轴索引（由配置注入，不写死机型）
-3. **start** — 进 OP / 启动 Timing+Job（周期所有权在主站）
+2. **map_joints** — 按 `AxisConfig` 映射 PDO / 轴索引（由配置注入，不写死机型）。
+   双主站公共字段为扁平身份：`joint_name`、`alias`、`position`、`vendor_id`、
+   `product_code`、`model_id`、`pdo_layout`（**无**嵌套 `MotorConfig`；运动学由主站
+   profile/SDO 与产品 YAML overlay 负责）
+3. **start** — 进 OP / 启动 Timing+Job（周期所有权在主站）；成功后默认保持 safe-output，
+   直至显式 `release_safe_output`
 4. **cycle** — 单周期：只灌 setpoint + 读缓存状态（**不**在 `exchange` 里重做 PDO）
-5. **request_safety_reset** — 清通信闩锁并 arm healthy dwell（**不**自动再使能 / **不**隐式 `0x0080`）
-6. **motion_reenable_allowed** — dwell 满足后才允许 `setEnable(true)`
-7. **shutdown** — 下使能并关闭传输
+5. **request_safety_reset** — 清通信闩锁并 arm healthy dwell（**不**自动再使能 / **不**隐式 `0x0080`）；
+   dwell 期间仍保持 safe-output
+6. **motion_reenable_allowed** / **health** — dwell 与策略授权后才允许再使能；
+   监督面用 `Master::health()`（`communication_fault`、`safe_output_active`、
+   `motion_reenable_allowed` 等），勿仅凭 `cycle()` 成功判定可动
+7. **release_safe_output** — 在 `SupervisedMotion` + 证据门 + healthy dwell 满足后释放灌入
+8. **request_fault_reset** — 显式 CiA402 Fault Reset（`0x0080`）；`0xFF` = 故障轴全体。
+   EC-Master 在 safe-output / 条件不满足时拒绝；IgH 当前恒返回 `false`
+9. **cycle_raw** — **仅 EC-Master**：宿主已完成单位换算的 raw PDO 周期（IgH 未移植）
+10. **shutdown** — 下使能并关闭传输
+
+构造参数 **`MotionPolicy`**（默认 `ObservationOnly`）：
+
+| Policy | 驱动配置（SDO） | 周期命令灌入 |
+|--------|-----------------|--------------|
+| `ObservationOnly` | 否 | 否 |
+| `Commissioning` | 是（主站支持时） | 否 |
+| `SupervisedMotion` | 是（主站支持时） | 证据门通过后可（仍需 `release_safe_output`） |
+
+产品 / 薄适配实机路径使用 `SupervisedMotion`。
 
 不要向上暴露原始 CAN/EtherCAT 帧；适配层只填充 `CommandSnapshot` / `StateSnapshot`。
 
@@ -81,7 +102,11 @@ EC-Master 与 IgH 均提供 `apply_command_contention_fallback()`：适配层 `t
 
 | 能力 | EC-Master | IgH | 框架 / 适配层 |
 |------|-----------|-----|----------------|
-| Job 内 safe-output | ✅ [`docs/INTEGRATION.md`](../../robot_ethercat_master_ecmaster/docs/INTEGRATION.md) | ✅ 同语义 | `cycle()` fault → `exchange` 返回 false；产品急停另钉位 |
+| Job 内 safe-output | ✅ | ✅ 同语义 | `cycle()` fault → `exchange` 返回 false；产品急停另钉位 |
+| `MotionPolicy` + `health()` | ✅ | ✅ | 适配/产品 Bus：`SupervisedMotion`；`FeatureState` 读 health |
+| `release_safe_output` | ✅ | ✅ | `exchange` 在 `motion_reenable_allowed` 后调用 |
+| `request_fault_reset` | ✅ | API 存在，恒 `false` | 产品 `/request_fault_reset` → FeatureBridge → Bus |
+| `cycle_raw` | ✅ | 未移植 | 仅宿主 raw 路径；SI 薄适配用 `cycle` |
 | 跳拍 + deadline 度量 | ✅ | ✅ | 文件轨迹按**实际执行拍**推进（墙钟可能压缩） |
 | `mlockall` + RT fail-closed | ✅ `ECMASTER_*` | ✅ `IGH_*` | 部署检查在主站脚本 / systemd example |
 | PDO / `0x60C2` 证据门 | ✅ | ✅ | 使能失败时读主站错误串 |
@@ -90,7 +115,7 @@ EC-Master 与 IgH 均提供 `apply_command_contention_fallback()`：适配层 `t
 | DC 失步监控 | ✅ | ✅ | 仅诊断；停机在主站 Job |
 | IgH 硬实时 Job 所有权 | — | ✅ | `IghHardwareBus` / `ArmIghHardwareBus` |
 
-**HIL**：上表能力均待台架拔线 / 超期 / 复位 dwell / CST 超时验收；未测项不得对外宣称生产合格。
+**HIL**：上表能力均待台架拔线 / 超期 / 复位 dwell / Fault Reset / CST 超时验收；未测项不得对外宣称生产合格。
 
 ## 观测与故障恢复（产品侧）
 
@@ -98,10 +123,12 @@ EC-Master 与 IgH 均提供 `apply_command_contention_fallback()`：适配层 `t
 |------|------|
 | 1 | 通信 / 异常闩锁 → Job safe-output；`Master::cycle` 停灌入 |
 | 2 | 调 `/request_safety_reset`（或等价 C++ API）清闩锁并开始 healthy dwell |
-| 3 | 待 `motion_reenable_allowed` 后再 `/set_enable` |
-| 4 | **不**期望断线后全自动重使能 |
+| 3 | dwell 满足后 Bus 调用 `release_safe_output`；待 `motion_reenable_allowed` 再 `/set_enable` |
+| 4 | 驱动 Fault 态需显式 `/request_fault_reset`（`axis_id`，`255`=全体）；**不**与 safety reset 混用 |
+| 5 | **不**期望断线后全自动重使能 |
 
 排障：产品仓 `robot_arm_control/docs/troubleshooting.md`；主站 env 见各仓 `config/env.example`。
+EC-Master 部署须提供 `ECMASTER_ENI_FILE`，并以批准 PCI BDF 解析 `ECMASTER_INTELGBE_INSTANCE`（勿猜死网卡序号）。
 
 ## 与 Skeleton TODO 的对应
 

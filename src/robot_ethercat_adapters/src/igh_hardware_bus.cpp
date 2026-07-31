@@ -28,7 +28,8 @@ bool IghHardwareBus::configure(
   params_ = params;
   joint_names_ = joint_names;
 
-  master_ = std::make_unique<ethercat_master_igh::Master>(0);
+  master_ = std::make_unique<ethercat_master_igh::Master>(
+    0, ethercat_master_igh::MotionPolicy::SupervisedMotion);
   if (!master_->init(error)) {
     master_.reset();
     return false;
@@ -58,6 +59,11 @@ bool IghHardwareBus::start(std::string & error)
     return false;
   }
   if (!master_->start(error)) {
+    return false;
+  }
+  std::string reset_err;
+  if (!master_->request_safety_reset(reset_err)) {
+    error = reset_err.empty() ? "post-start safety reset failed" : reset_err;
     return false;
   }
   running_ = true;
@@ -101,6 +107,14 @@ bool IghHardwareBus::exchange(
     // Empty / undersized enable → keep enabled (true). Undersized mode → 0 = unchanged.
     c.enable = (command.enable.size() == n) ? (command.enable[i] != 0) : true;
     c.operation_mode = (command.operation_mode.size() == n) ? command.operation_mode[i] : 0;
+  }
+
+  if (master_->motion_reenable_allowed()) {
+    const auto health = master_->health();
+    if (health.safe_output_active) {
+      std::string release_err;
+      (void)master_->release_safe_output(release_err);
+    }
   }
 
   if (!master_->cycle(cmd_buf_.data(), n, state_buf_.data(), n, error)) {

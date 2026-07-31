@@ -64,12 +64,33 @@ Build with masters on `CMAKE_PREFIX_PATH` (source their `install/setup.bash` fir
 Stable, ROS-decoupled C++ surface (sketch):
 
 1. **init** — open NIC / load ENI or IgH domain; bring up slaves
-2. **map_joints** — `joint_names[]` → PDO / axis index (from config, not hard-coded models)
-3. **start** — reach OP / start Timing+Job (cycle ownership lives in the master)
+2. **map_joints** — map axes from `AxisConfig` (from config, not hard-coded models).
+   Shared dual-master fields are flat identities: `joint_name`, `alias`, `position`,
+   `vendor_id`, `product_code`, `model_id`, `pdo_layout` (**no** nested `MotorConfig`;
+   kinematics come from master profiles/SDO and product YAML overlays)
+3. **start** — reach OP / start Timing+Job (cycle ownership lives in the master);
+   keeps safe-output armed until explicit `release_safe_output`
 4. **cycle** — one period: push setpoints + read cached state (**no** PDO exchange inside `exchange`)
-5. **request_safety_reset** — clear comm latch and arm healthy dwell (**no** auto re-enable / **no** implicit `0x0080`)
-6. **motion_reenable_allowed** — gate `setEnable(true)` after dwell
-7. **shutdown** — disable drives and close transport
+5. **request_safety_reset** — clear comm latch and arm healthy dwell (**no** auto re-enable /
+   **no** implicit `0x0080`); safe-output stays asserted through dwell
+6. **motion_reenable_allowed** / **health** — gate re-enable after dwell and policy;
+   supervise via `Master::health()` (`communication_fault`, `safe_output_active`,
+   `motion_reenable_allowed`, …) — do not treat a successful `cycle()` alone as motion-ready
+7. **release_safe_output** — release injection after `SupervisedMotion` + evidence + healthy dwell
+8. **request_fault_reset** — explicit CiA402 Fault Reset (`0x0080`); `0xFF` = all faulted axes.
+   EC-Master may refuse under safe-output; IgH currently always returns `false`
+9. **cycle_raw** — **EC-Master only**: host-owned raw PDO cycle (not ported on IgH)
+10. **shutdown** — disable drives and close transport
+
+Constructor **`MotionPolicy`** (default `ObservationOnly`):
+
+| Policy | Drive SDO config | Cyclic command injection |
+|--------|------------------|--------------------------|
+| `ObservationOnly` | no | no |
+| `Commissioning` | yes (when supported) | no |
+| `SupervisedMotion` | yes (when supported) | yes after evidence (still needs `release_safe_output`) |
+
+Product / thin-adapter real paths use `SupervisedMotion`.
 
 Do not expose raw CAN/EtherCAT frames upward. The adapter only fills `CommandSnapshot` / `StateSnapshot`.
 
@@ -81,7 +102,11 @@ Details and env vars live in each master repo; this table only maps framework / 
 
 | Capability | EC-Master | IgH | Framework / adapter |
 |------------|-----------|-----|---------------------|
-| In-Job safe-output | ✅ [`docs/INTEGRATION.md`](../../robot_ethercat_master_ecmaster/docs/INTEGRATION.md) | ✅ same semantics | `cycle()` fault → `exchange` returns false |
+| In-Job safe-output | ✅ | ✅ same semantics | `cycle()` fault → `exchange` returns false |
+| `MotionPolicy` + `health()` | ✅ | ✅ | Buses use `SupervisedMotion`; FeatureState reads health |
+| `release_safe_output` | ✅ | ✅ | `exchange` calls after `motion_reenable_allowed` |
+| `request_fault_reset` | ✅ | API present, always `false` | Product `/request_fault_reset` → FeatureBridge → Bus |
+| `cycle_raw` | ✅ | not ported | Host raw paths only; SI adapters use `cycle` |
 | Skip-slot + deadline metrics | ✅ | ✅ | File trajectories advance on **executed** beats |
 | `mlockall` + RT fail-closed | ✅ `ECMASTER_*` | ✅ `IGH_*` | Deploy checks in master scripts / systemd examples |
 | PDO / `0x60C2` evidence gate | ✅ | ✅ | Surface master error string on enable refusal |
@@ -90,7 +115,7 @@ Details and env vars live in each master repo; this table only maps framework / 
 | DC out-of-sync monitor | ✅ | ✅ | Diagnostics only; stop is in-Job |
 | IgH hard-RT Job ownership | — | ✅ | `IghHardwareBus` / `ArmIghHardwareBus` |
 
-**HIL**: capabilities above still pending pull-cable / overrun / reset-dwell / CST-timeout bench tests.
+**HIL**: capabilities above still pending pull-cable / overrun / reset-dwell / Fault Reset / CST-timeout bench tests.
 
 ## Observation and recovery (product)
 
@@ -98,10 +123,12 @@ Details and env vars live in each master repo; this table only maps framework / 
 |------|--------|
 | 1 | Comm / anomaly latch → Job safe-output; `Master::cycle` stops injecting |
 | 2 | Call `/request_safety_reset` (or C++ API) to clear latch and start healthy dwell |
-| 3 | Wait for `motion_reenable_allowed`, then `/set_enable` |
-| 4 | Do **not** expect automatic re-enable after link loss |
+| 3 | After dwell, Bus calls `release_safe_output`; then `/set_enable` when `motion_reenable_allowed` |
+| 4 | Drive Fault state needs explicit `/request_fault_reset` (`axis_id`, `255`=all); not mixed with safety reset |
+| 5 | Do **not** expect automatic re-enable after link loss |
 
 See product `robot_arm_control/docs/troubleshooting.md` and each master’s `config/env.example`.
+EC-Master deployments must supply `ECMASTER_ENI_FILE` and resolve `ECMASTER_INTELGBE_INSTANCE` from an approved PCI BDF (do not hard-code NIC ordinals).
 
 ## Mapping from Skeleton TODOs
 
