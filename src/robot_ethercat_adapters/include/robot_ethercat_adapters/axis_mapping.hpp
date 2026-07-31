@@ -59,6 +59,47 @@ inline bool build_motor_configs(
   return true;
 }
 
+/// Legacy AxisConfig: `{ joint_name, motor }` (IgH / pre-upgrade EC-Master).
+template<typename AxisConfigT>
+auto fill_axis_config(
+  AxisConfigT & axis,
+  const std::string & joint_name,
+  const ethercat_joint::MotorConfig & motor,
+  int) -> decltype(axis.motor = motor, void())
+{
+  axis.joint_name = joint_name;
+  axis.motor = motor;
+}
+
+/// Flat AxisConfig: alias/position/VID/PID/model_id/pdo_layout (EC-Master upgrade).
+template<typename AxisConfigT>
+void fill_axis_config(
+  AxisConfigT & axis,
+  const std::string & joint_name,
+  const ethercat_joint::MotorConfig & motor,
+  long)
+{
+  axis.joint_name = joint_name;
+  axis.alias = motor.alias;
+  axis.position = motor.position;
+  axis.vendor_id = motor.vendor_id;
+  axis.product_code = motor.product_code;
+  axis.model_id = motor.model_id;
+  using PdoLayoutT = decltype(axis.pdo_layout);
+  switch (motor.pdo_layout) {
+    case ethercat_joint::PdoLayout::JOINT_MODULE:
+      axis.pdo_layout = PdoLayoutT::JointModule;
+      break;
+    case ethercat_joint::PdoLayout::GATEWAY:
+      axis.pdo_layout = PdoLayoutT::Gateway;
+      break;
+    case ethercat_joint::PdoLayout::UNKNOWN:
+    default:
+      axis.pdo_layout = PdoLayoutT::Unknown;
+      break;
+  }
+}
+
 template<typename AxisConfigT>
 bool build_axis_configs(
   const std::vector<std::string> & joint_names,
@@ -73,8 +114,7 @@ bool build_axis_configs(
   axes.reserve(motors.size());
   for (std::size_t i = 0; i < motors.size(); ++i) {
     AxisConfigT axis;
-    axis.joint_name = joint_names[i];
-    axis.motor = motors[i];
+    fill_axis_config(axis, joint_names[i], motors[i], 0);
     axes.push_back(axis);
   }
   return true;
