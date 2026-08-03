@@ -78,7 +78,8 @@ HardwareBus::exchange()          ← pluginlib 类名可切换
    `motion_reenable_allowed` 等），勿仅凭 `cycle()` 成功判定可动
 7. **release_safe_output** — 在 `SupervisedMotion` + 证据门 + healthy dwell 满足后释放灌入
 8. **request_fault_reset** — 显式 CiA402 Fault Reset（`0x0080`）；`0xFF` = 故障轴全体。
-   EC-Master 在 safe-output / 条件不满足时拒绝；IgH 当前恒返回 `false`
+   双主站均要求已闩 safe-output、所选轴已失能且存在 Fault（6041 bit3）；条件不满足时返回 `false`；
+   Job 在窗口内写 `0x0080`（约 10 个总线周期）
 9. **cycle_raw** — **仅 EC-Master**：宿主已完成单位换算的 raw PDO 周期（IgH 未移植）
 10. **shutdown** — 下使能并关闭传输
 
@@ -105,7 +106,7 @@ EC-Master 与 IgH 均提供 `apply_command_contention_fallback()`：适配层 `t
 | Job 内 safe-output | ✅ | ✅ 同语义 | `cycle()` fault → `exchange` 返回 false；产品急停另钉位 |
 | `MotionPolicy` + `health()` | ✅ | ✅ | 适配/产品 Bus：`SupervisedMotion`；`FeatureState` 读 health |
 | `release_safe_output` | ✅ | ✅ | `exchange` 在 `motion_reenable_allowed` 后调用 |
-| `request_fault_reset` | ✅ | API 存在，恒 `false` | 产品 `/request_fault_reset` → FeatureBridge → Bus |
+| `request_fault_reset` | ✅ | ✅（safe-output + 失能门禁；窗口内写 0x0080） | 产品 `/request_fault_reset` → FeatureBridge → Bus |
 | `cycle_raw` | ✅ | 未移植 | 仅宿主 raw 路径；SI 薄适配用 `cycle` |
 | 跳拍 + deadline 度量 | ✅ | ✅ | 文件轨迹按**实际执行拍**推进（墙钟可能压缩） |
 | `mlockall` + RT fail-closed | ✅ `ECMASTER_*` | ✅ `IGH_*` | 部署检查在主站脚本 / systemd example |

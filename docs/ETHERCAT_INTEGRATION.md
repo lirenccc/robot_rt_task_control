@@ -78,7 +78,8 @@ Stable, ROS-decoupled C++ surface (sketch):
    `motion_reenable_allowed`, …) — do not treat a successful `cycle()` alone as motion-ready
 7. **release_safe_output** — release injection after `SupervisedMotion` + evidence + healthy dwell
 8. **request_fault_reset** — explicit CiA402 Fault Reset (`0x0080`); `0xFF` = all faulted axes.
-   EC-Master may refuse under safe-output; IgH currently always returns `false`
+   Both masters require safe-output armed, selected axes disabled, and at least one Fault
+   (6041 bit3); returns `false` when gates fail; Job writes `0x0080` for ~10 bus cycles
 9. **cycle_raw** — **EC-Master only**: host-owned raw PDO cycle (not ported on IgH)
 10. **shutdown** — disable drives and close transport
 
@@ -105,7 +106,7 @@ Details and env vars live in each master repo; this table only maps framework / 
 | In-Job safe-output | ✅ | ✅ same semantics | `cycle()` fault → `exchange` returns false |
 | `MotionPolicy` + `health()` | ✅ | ✅ | Buses use `SupervisedMotion`; FeatureState reads health |
 | `release_safe_output` | ✅ | ✅ | `exchange` calls after `motion_reenable_allowed` |
-| `request_fault_reset` | ✅ | API present, always `false` | Product `/request_fault_reset` → FeatureBridge → Bus |
+| `request_fault_reset` | ✅ | ✅ (safe-output + disabled gate; window writes `0x0080`) | Product `/request_fault_reset` → FeatureBridge → Bus |
 | `cycle_raw` | ✅ | not ported | Host raw paths only; SI adapters use `cycle` |
 | Skip-slot + deadline metrics | ✅ | ✅ | File trajectories advance on **executed** beats |
 | `mlockall` + RT fail-closed | ✅ `ECMASTER_*` | ✅ `IGH_*` | Deploy checks in master scripts / systemd examples |
