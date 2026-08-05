@@ -171,7 +171,15 @@ void RtControlLoop::run()
 
   while (!stop_requested_.load(std::memory_order_relaxed)) {
     const auto wake_time = next_tick(start, tick, period);
-    std::this_thread::sleep_until(wake_time);
+    const auto now0 = std::chrono::steady_clock::now();
+    if (wake_time > now0) {
+      std::this_thread::sleep_until(wake_time);
+    } else {
+      // wake 已过（sleep 被信号打断或上一拍执行超时）：重新基准到当前时刻，
+      // 避免 sleep_until 持续立即返回形成忙等（与 IgH timing 防长睡同源修复）。
+      start = std::chrono::steady_clock::now();
+      tick = 0;
+    }
 
     const auto loop_begin = std::chrono::steady_clock::now();
 
