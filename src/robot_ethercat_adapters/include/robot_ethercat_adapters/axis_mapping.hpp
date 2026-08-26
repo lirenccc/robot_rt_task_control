@@ -33,6 +33,8 @@ PdoLayoutT to_axis_pdo_layout(ethercat_joint::PdoLayout layout) noexcept
       return PdoLayoutT::Gateway;
     case ethercat_joint::PdoLayout::COOLDRIVE_JMDT:
       return PdoLayoutT::CoolDriveJmdt;
+    case ethercat_joint::PdoLayout::SRI_M8126:
+      return PdoLayoutT::SriM8126;
     case ethercat_joint::PdoLayout::UNKNOWN:
     default:
       return PdoLayoutT::Unknown;
