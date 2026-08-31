@@ -36,7 +36,7 @@ English: [ETHERCAT_INTEGRATION.md](ETHERCAT_INTEGRATION.md)
 | `robot_ethercat_adapters/EcMasterHardwareBus` | `robot_ethercat_adapters_ecmaster` | `ethercat_master_ecmaster` |
 | `robot_ethercat_adapters/IghHardwareBus` | `robot_ethercat_adapters_igh` | `ethercat_master_igh` |
 
-关节映射：`ETHERCAT_MOTOR_MODEL`（默认 `NH17-100-BT-48E`）+ `MotorProfileRegistry`；轴顺序与 URDF `joint_names` 一致。
+关节映射：须设置 `ETHERCAT_MOTOR_MODEL` 和/或 `MOTORS_CONFIG_FILE` 中的 `motor_model`（可选 `motor_models[]`），经主站 `MotorProfileRegistry` 解析；轴顺序与 URDF `joint_names` 一致。薄适配不硬编码厂商型号。
 
 ```text
 RtControlLoop @ loop_hz

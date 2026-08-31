@@ -6,7 +6,7 @@
 # Then set hardware.base.plugin to one of:
 #   robot_ethercat_adapters/EcMasterHardwareBus
 #   robot_ethercat_adapters/IghHardwareBus
-# and export ETHERCAT_MOTOR_MODEL (default NH17-100-BT-48E).
+# and export ETHERCAT_MOTOR_MODEL (or MOTORS_CONFIG_FILE with motor_model).
 
 schema_version: 1
 

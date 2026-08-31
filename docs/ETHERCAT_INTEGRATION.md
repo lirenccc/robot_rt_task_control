@@ -36,7 +36,7 @@ Thin adapters in this workspace (`robot_ethercat_adapters`, optional QUIET build
 | `robot_ethercat_adapters/EcMasterHardwareBus` | `robot_ethercat_adapters_ecmaster` | `ethercat_master_ecmaster` |
 | `robot_ethercat_adapters/IghHardwareBus` | `robot_ethercat_adapters_igh` | `ethercat_master_igh` |
 
-Joint → slave map uses `ETHERCAT_MOTOR_MODEL` (default `NH17-100-BT-48E`) and `MotorProfileRegistry`; axes are ordered as URDF `joint_names`.
+Joint → slave map requires `ETHERCAT_MOTOR_MODEL` and/or `MOTORS_CONFIG_FILE` (`motor_model`, optional `motor_models[]`), resolved via the master `MotorProfileRegistry`; axes follow URDF `joint_names`. The thin adapter does not hardcode vendor model ids.
 
 ```text
 RtControlLoop @ loop_hz

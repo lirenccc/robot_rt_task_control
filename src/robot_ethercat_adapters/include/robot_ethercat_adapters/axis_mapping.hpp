@@ -26,6 +26,7 @@ namespace detail
 template<typename PdoLayoutT>
 PdoLayoutT to_axis_pdo_layout(ethercat_joint::PdoLayout layout) noexcept
 {
+  // 薄 CSP 适配只转发关节/驱动布局；非驱动从站（如六维力）由产品 Arm*HardwareBus 追加。
   switch (layout) {
     case ethercat_joint::PdoLayout::JOINT_MODULE:
       return PdoLayoutT::JointModule;
@@ -33,8 +34,6 @@ PdoLayoutT to_axis_pdo_layout(ethercat_joint::PdoLayout layout) noexcept
       return PdoLayoutT::Gateway;
     case ethercat_joint::PdoLayout::COOLDRIVE_JMDT:
       return PdoLayoutT::CoolDriveJmdt;
-    case ethercat_joint::PdoLayout::SRI_M8126:
-      return PdoLayoutT::SriM8126;
     case ethercat_joint::PdoLayout::UNKNOWN:
     default:
       return PdoLayoutT::Unknown;
@@ -88,8 +87,8 @@ inline std::vector<std::string> parse_yaml_string_list(const std::string & text,
 /**
  * Build flat AxisConfig list for ethercat_master_ecmaster / ethercat_master_igh.
  * Slave position defaults to joint index (must match ENI / ACTIVE_DOF).
- * Default model NH17-100-BT-48E when ETHERCAT_MOTOR_MODEL is unset.
- * MOTORS_CONFIG_FILE may set motor_model (arm default) and motor_models[] (per axis).
+ * Model id required: ETHERCAT_MOTOR_MODEL and/or MOTORS_CONFIG_FILE
+ * (`motor_model`, optional per-axis `motor_models[]`). No vendor model hardcoded here.
  */
 template<typename AxisConfigT>
 bool build_axis_configs(
@@ -104,7 +103,7 @@ bool build_axis_configs(
 
   const char * model_env = std::getenv("ETHERCAT_MOTOR_MODEL");
   std::string default_model =
-    (model_env != nullptr && model_env[0] != '\0') ? model_env : "NH17-100-BT-48E";
+    (model_env != nullptr && model_env[0] != '\0') ? model_env : std::string{};
 
   const std::string yaml_text = detail::read_motors_config_text();
   if (!yaml_text.empty()) {
@@ -124,6 +123,11 @@ bool build_axis_configs(
     if (i < per_axis_models.size() && !per_axis_models[i].empty()) {
       model_id = per_axis_models[i];
     }
+    if (model_id.empty()) {
+      error = "motor model required for axis " + std::to_string(i) +
+        " (set ETHERCAT_MOTOR_MODEL or MOTORS_CONFIG_FILE motor_model / motor_models[])";
+      return false;
+    }
 
     const auto * profile = ethercat_joint::MotorProfileRegistry::findByModelId(model_id);
     if (profile == nullptr || profile->identities.empty()) {
@@ -132,6 +136,13 @@ bool build_axis_configs(
     }
 
     const auto & id = profile->identities.front();
+    // isKnownMotor 排除非驱动从站；力传感器等不得经薄 CSP 适配按关节映射。
+    if (!ethercat_joint::MotorProfileRegistry::isKnownMotor(id.vendor_id, id.product_code)) {
+      error = "Non-drive EtherCAT slave model not supported by thin CSP adapter"
+        " (use product Arm*HardwareBus): " + model_id;
+      return false;
+    }
+
     AxisConfigT axis;
     axis.joint_name = joint_names[i];
     axis.alias = 0;
