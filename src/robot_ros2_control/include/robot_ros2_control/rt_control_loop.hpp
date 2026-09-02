@@ -15,7 +15,7 @@
 #include <thread>
 #include <vector>
 
-#include <realtime_tools/realtime_buffer.h>
+#include <realtime_tools/realtime_buffer.hpp>
 
 #include "robot_ros2_control/atomic_state_buffer.hpp"
 #include "robot_ros2_control/hardware_bus.hpp"

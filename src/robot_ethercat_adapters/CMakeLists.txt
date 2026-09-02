@@ -66,7 +66,7 @@ if(BUILT_ANY)
   ament_export_include_directories(include)
   ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 else()
-  message(WARNING
+  message(STATUS
     "robot_ethercat_adapters: no EtherCAT master packages found; "
     "package installs metadata only (no HardwareBus plugins).")
 endif()

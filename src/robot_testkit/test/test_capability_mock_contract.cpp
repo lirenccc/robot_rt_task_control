@@ -8,11 +8,12 @@
 TEST(CapabilityMockContract, NavigationStartWaitCancel)
 {
   robot_navigation_adapters::MockNavigationPort port;
-  auto started = port.start({}, nullptr);
+  robot_capability_api::NavigateGoal goal;
+  auto started = port.start(goal, nullptr);
   ASSERT_TRUE(started.ok()) << started.status().message;
   EXPECT_TRUE(port.wait(started.value(), 1.0).ok());
 
-  auto started2 = port.start({}, nullptr);
+  auto started2 = port.start(goal, nullptr);
   ASSERT_TRUE(started2.ok());
   EXPECT_TRUE(port.cancel(started2.value()).ok());
 }
@@ -21,8 +22,9 @@ TEST(CapabilityMockContract, ManipulationFeedbackAndWait)
 {
   robot_manipulation_adapters::MockManipulationPort port;
   float last_progress = 0.0f;
+  robot_capability_api::ManipulationGoal goal;
   auto started = port.execute(
-    {},
+    goal,
     [&](const robot_capability_api::ManipulationFeedback & fb) {
       last_progress = fb.progress;
     });

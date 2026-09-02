@@ -2,6 +2,16 @@
 cmake_minimum_required(VERSION 3.8)
 project(robot_interfaces)
 
+# colcon may pass catkin-only cache variables; reference to silence unused warnings.
+if(DEFINED CATKIN_INSTALL_INTO_PREFIX_ROOT)
+  set(_robot_interfaces_catkin_legacy "${CATKIN_INSTALL_INTO_PREFIX_ROOT}")
+endif()
+if(DEFINED CATKIN_SYMLINK_INSTALL)
+  set(_robot_interfaces_catkin_legacy_install "${CATKIN_SYMLINK_INSTALL}")
+endif()
+unset(_robot_interfaces_catkin_legacy)
+unset(_robot_interfaces_catkin_legacy_install)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
