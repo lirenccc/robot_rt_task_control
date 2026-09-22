@@ -68,6 +68,8 @@ bool RtControlLoop::start(std::string & error)
   loop_count_.store(0);
   missed_deadlines_.store(0);
   measured_frequency_hz_.store(0.0);
+  last_cycle_duration_us_.store(0.0);
+  max_cycle_duration_us_.store(0.0);
 
   thread_ = std::thread(&RtControlLoop::run, this);
   error.clear();
@@ -106,6 +108,8 @@ RtStats RtControlLoop::stats() const
   s.measured_frequency_hz = measured_frequency_hz_.load();
   s.loop_count = loop_count_.load();
   s.missed_deadlines = missed_deadlines_.load();
+  s.last_cycle_duration_us = last_cycle_duration_us_.load();
+  s.max_cycle_duration_us = max_cycle_duration_us_.load();
   return s;
 }
 
@@ -130,8 +134,9 @@ void RtControlLoop::try_set_realtime_priority()
 
   const int ret = pthread_setschedparam(pthread_self(), SCHED_FIFO, &sched);
   if (ret != 0) {
-    std::lock_guard<std::mutex> lock(error_mutex_);
-    last_error_ = std::string("Failed to set SCHED_FIFO: ") + std::strerror(ret);
+    // Soft fallback to CFS: do not poison last_error (exchange failures use that path).
+    std::cerr << "[RtControlLoop] SCHED_FIFO unavailable (" << std::strerror(ret)
+              << "); continuing under CFS\n";
   }
 #endif
 }
@@ -170,15 +175,20 @@ void RtControlLoop::run()
   uint64_t tick = 1;
 
   while (!stop_requested_.load(std::memory_order_relaxed)) {
-    const auto wake_time = next_tick(start, tick, period);
-    const auto now0 = std::chrono::steady_clock::now();
+    auto wake_time = next_tick(start, tick, period);
+    auto now0 = std::chrono::steady_clock::now();
     if (wake_time > now0) {
       std::this_thread::sleep_until(wake_time);
     } else {
-      // wake 已过（sleep 被信号打断或上一拍执行超时）：重新基准到当前时刻，
-      // 避免 sleep_until 持续立即返回形成忙等（与 IgH timing 防长睡同源修复）。
-      start = std::chrono::steady_clock::now();
-      tick = 0;
+      // 已过唤醒点：跳过空拍以保持相对 start 的绝对相位，避免每次 rebase
+      // 在 exchange 经常 overrun 时变成自由运行的 ~1/work_hz 环。
+      // missed_deadlines 只统计 work 超时（见下），不把跳拍算进去。
+      const auto late = now0 - start;
+      const auto slots =
+        static_cast<uint64_t>(late.count() / period.count());
+      if (slots + 1 > tick) {
+        tick = slots;
+      }
     }
 
     const auto loop_begin = std::chrono::steady_clock::now();
@@ -201,6 +211,15 @@ void RtControlLoop::run()
 
     const auto loop_end = std::chrono::steady_clock::now();
     const auto elapsed = loop_end - loop_begin;
+    const double elapsed_us =
+      std::chrono::duration<double, std::micro>(elapsed).count();
+    last_cycle_duration_us_.store(elapsed_us, std::memory_order_relaxed);
+    double prev_max = max_cycle_duration_us_.load(std::memory_order_relaxed);
+    while (elapsed_us > prev_max &&
+      !max_cycle_duration_us_.compare_exchange_weak(
+        prev_max, elapsed_us, std::memory_order_relaxed))
+    {
+    }
     if (elapsed > period) {
       missed_deadlines_.fetch_add(1, std::memory_order_relaxed);
     }

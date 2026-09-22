@@ -78,6 +78,8 @@ private:
   std::atomic<uint64_t> loop_count_{0};
   std::atomic<uint64_t> missed_deadlines_{0};
   std::atomic<double> measured_frequency_hz_{0.0};
+  std::atomic<double> last_cycle_duration_us_{0.0};
+  std::atomic<double> max_cycle_duration_us_{0.0};
 
   mutable std::mutex error_mutex_;
   std::string last_error_;

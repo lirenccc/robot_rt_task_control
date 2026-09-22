@@ -94,6 +94,10 @@ struct RtStats
   double measured_frequency_hz{0.0};
   uint64_t loop_count{0};
   uint64_t missed_deadlines{0};
+  /// 上一拍 work（limiter+exchange+state）耗时，微秒。
+  double last_cycle_duration_us{0.0};
+  /// 自 start 以来最大 work 耗时，微秒。
+  double max_cycle_duration_us{0.0};
 };
 
 }  // namespace robot_hardware_api

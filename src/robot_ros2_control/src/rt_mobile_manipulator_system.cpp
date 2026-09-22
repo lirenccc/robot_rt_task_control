@@ -238,6 +238,8 @@ void RtMobileManipulatorSystem::maybe_publish_rt_stats(const rclcpp::Time & time
   msg.measured_frequency_hz = s.measured_frequency_hz;
   msg.loop_count = s.loop_count;
   msg.missed_deadlines = s.missed_deadlines;
+  msg.last_cycle_duration_us = s.last_cycle_duration_us;
+  msg.max_cycle_duration_us = s.max_cycle_duration_us;
   msg.last_error = rt_loop_->last_error();
   stats_pub_->publish(msg);
 }
