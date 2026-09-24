@@ -66,6 +66,7 @@ void HealthMonitor::set_rt_stats(
   uint64_t missed,
   std::string last_error)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   rt_running_ = running;
   measured_hz_ = measured_hz;
   loop_count_ = loop_count;
@@ -89,31 +90,44 @@ void HealthMonitor::on_rt_loop_stats(const robot_interfaces::msg::RtLoopStats & 
   if (!msg.last_error.empty()) {
     faults_->raise(
       robot_core_api::FaultMode::Fault, "RT_LOOP_ERROR", msg.last_error);
+    std::lock_guard<std::mutex> lock(mutex_);
     last_seen_missed_ = msg.missed_deadlines;
     have_missed_baseline_ = true;
     return;
   }
 
-  if (have_missed_baseline_) {
-    const uint64_t delta = msg.missed_deadlines >= last_seen_missed_
-      ? msg.missed_deadlines - last_seen_missed_ : 0;
-    if (delta >= kMissedDeltaFaultThreshold) {
-      faults_->raise(
-        robot_core_api::FaultMode::Fault,
-        "RT_LOOP_MISSED",
-        "missed_deadlines delta=" + std::to_string(delta));
-    } else if (
-      msg.running &&
-      faults_->mode() == robot_core_api::FaultMode::Fault)
-    {
-      const auto code = faults_->fault_code();
-      if (code == "RT_LOOP_ERROR" || code == "RT_LOOP_MISSED") {
-        faults_->clear();
+  bool raise_missed = false;
+  uint64_t missed_delta = 0;
+  bool try_clear_rt_fault = false;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (have_missed_baseline_) {
+      missed_delta = msg.missed_deadlines >= last_seen_missed_
+        ? msg.missed_deadlines - last_seen_missed_ : 0;
+      if (missed_delta >= kMissedDeltaFaultThreshold) {
+        raise_missed = true;
+      } else if (msg.running) {
+        try_clear_rt_fault = true;
       }
     }
+    last_seen_missed_ = msg.missed_deadlines;
+    have_missed_baseline_ = true;
   }
-  last_seen_missed_ = msg.missed_deadlines;
-  have_missed_baseline_ = true;
+
+  if (raise_missed) {
+    faults_->raise(
+      robot_core_api::FaultMode::Fault,
+      "RT_LOOP_MISSED",
+      "missed_deadlines delta=" + std::to_string(missed_delta));
+  } else if (
+    try_clear_rt_fault &&
+    faults_->mode() == robot_core_api::FaultMode::Fault)
+  {
+    const auto code = faults_->fault_code();
+    if (code == "RT_LOOP_ERROR" || code == "RT_LOOP_MISSED") {
+      faults_->clear();
+    }
+  }
 }
 
 void HealthMonitor::tick()
@@ -124,11 +138,14 @@ void HealthMonitor::tick()
 
   robot_interfaces::msg::HardwareHealth msg;
   msg.stamp = node_->now();
-  msg.rt_loop_running = rt_running_;
-  msg.measured_frequency_hz = measured_hz_;
-  msg.loop_count = loop_count_;
-  msg.missed_deadlines = missed_;
-  msg.last_error = last_error_;
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    msg.rt_loop_running = rt_running_;
+    msg.measured_frequency_hz = measured_hz_;
+    msg.loop_count = loop_count_;
+    msg.missed_deadlines = missed_;
+    msg.last_error = last_error_;
+  }
   if (msg.last_error.empty() && navigation_ && !navigation_->health().available) {
     msg.last_error = "navigation unavailable: " + navigation_->health().detail;
   }

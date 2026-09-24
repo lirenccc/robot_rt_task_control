@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include <rclcpp/rclcpp.hpp>
@@ -53,6 +54,9 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   robot_core_api::LifecycleState state_{robot_core_api::LifecycleState::Unconfigured};
 
+  // Guards RT snapshot fields: MultiThreadedExecutor runs timer + /robot/rt_loop_stats
+  // subscription concurrently; unprotected std::string assign/copy can SIGSEGV.
+  mutable std::mutex mutex_;
   bool rt_running_{false};
   double measured_hz_{0.0};
   uint64_t loop_count_{0};

@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <thread>
+
 #include <rclcpp/rclcpp.hpp>
 
 #include "robot_core_api/fault.hpp"
@@ -92,4 +95,33 @@ TEST_F(HealthMonitorRtFaultTest, HealthyStatsClearRtFault)
 
   EXPECT_EQ(faults_->mode(), robot_core_api::FaultMode::Ok);
   EXPECT_TRUE(faults_->allows_motion());
+}
+
+// Reproduces task_orchestrator_node MultiThreadedExecutor race: timer tick reads
+// last_error_ while /robot/rt_loop_stats callback assigns it.
+TEST_F(HealthMonitorRtFaultTest, ConcurrentStatsAndTickDoNotCrash)
+{
+  auto pub = node_->create_publisher<robot_interfaces::msg::RtLoopStats>(
+    "/robot/rt_loop_stats", rclcpp::SystemDefaultsQoS());
+
+  rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 4);
+  executor.add_node(node_);
+  std::thread spin_thread([&executor]() { executor.spin(); });
+
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+  uint64_t n = 0;
+  while (std::chrono::steady_clock::now() < deadline) {
+    robot_interfaces::msg::RtLoopStats msg;
+    msg.running = true;
+    msg.measured_frequency_hz = 500.0;
+    msg.loop_count = n++;
+    msg.missed_deadlines = n / 100;
+    msg.last_error = (n % 17 == 0) ? "sporadic" : "";
+    pub->publish(msg);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  }
+
+  executor.cancel();
+  spin_thread.join();
+  SUCCEED();
 }
