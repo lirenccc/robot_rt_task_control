@@ -24,6 +24,8 @@ struct HardwareParams
   int rt_priority{70};
   /// When true, RtControlLoop requests SCHED_FIFO; failure is recorded but the loop still runs.
   bool use_fifo_scheduler{false};
+  /// RT 环绑定的 CPU。负数表示不绑核。双臂实机常用 4（5/6 给主站 Job，7 常有无线中断）。
+  int cpu_affinity{-1};
   double max_velocity{2.0};
   double max_effort{20.0};
   double position_kp{8.0};

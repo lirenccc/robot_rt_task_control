@@ -59,6 +59,7 @@ public:
 private:
   void run();
   void try_set_realtime_priority();
+  void try_set_cpu_affinity();
   static std::chrono::steady_clock::time_point next_tick(
     const std::chrono::steady_clock::time_point & start,
     uint64_t tick,

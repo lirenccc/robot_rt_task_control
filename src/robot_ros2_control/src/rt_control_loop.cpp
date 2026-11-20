@@ -141,6 +141,29 @@ void RtControlLoop::try_set_realtime_priority()
 #endif
 }
 
+void RtControlLoop::try_set_cpu_affinity()
+{
+#ifdef __linux__
+  if (params_.cpu_affinity < 0) {
+    return;
+  }
+  const int ncpu = static_cast<int>(CPU_SETSIZE);
+  if (params_.cpu_affinity >= ncpu) {
+    std::cerr << "[RtControlLoop] cpu_affinity=" << params_.cpu_affinity
+              << " out of range; continuing without pin\n";
+    return;
+  }
+  cpu_set_t set;
+  CPU_ZERO(&set);
+  CPU_SET(params_.cpu_affinity, &set);
+  const int ret = pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
+  if (ret != 0) {
+    std::cerr << "[RtControlLoop] cpu_affinity=" << params_.cpu_affinity
+              << " failed (" << std::strerror(ret) << "); continuing without pin\n";
+  }
+#endif
+}
+
 std::chrono::steady_clock::time_point RtControlLoop::next_tick(
   const std::chrono::steady_clock::time_point & start,
   uint64_t tick,
@@ -156,6 +179,7 @@ void RtControlLoop::run()
   // work after wake (limiter + exchange + state publish), not sleep_until latency. A failed
   // exchange records last_error but does not stop the loop — fault policy lives in the bus /
   // master Job (safe-output), not here. Null command_ptr keeps the previous command.
+  try_set_cpu_affinity();
   try_set_realtime_priority();
 
   const auto period_ns = static_cast<int64_t>(1e9 / params_.loop_hz);

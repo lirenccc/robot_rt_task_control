@@ -198,6 +198,7 @@ HardwareParams RtMobileManipulatorSystem::parse_params() const
   p.loop_hz = parse_double(get("rt_loop_hz"), p.loop_hz);
   p.rt_priority = parse_int(get("rt_priority"), p.rt_priority);
   p.use_fifo_scheduler = parse_bool(get("use_fifo_scheduler"), p.use_fifo_scheduler);
+  p.cpu_affinity = parse_int(get("rt_cpu_affinity"), p.cpu_affinity);
   p.max_velocity = parse_double(get("max_velocity"), p.max_velocity);
   p.max_effort = parse_double(get("max_effort"), p.max_effort);
   p.position_kp = parse_double(get("position_kp"), p.position_kp);
